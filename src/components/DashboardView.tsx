@@ -27,6 +27,10 @@ import {
 import { TOOLS, CATEGORIES } from '../data/tools';
 import ToolCard from './ToolCard';
 import { useToast } from './Toast';
+import TrustDetailModal from './TrustDetailModal';
+import { WhyBrowserOnly, HowItWorks, DeveloperQuality, PrivacyPromise } from './StorytellingSections';
+import FAQSection from './FAQSection';
+import { designTokens } from '../designSystem';
 
 interface DashboardViewProps {
   selectedCategory: string | null;
@@ -52,6 +56,7 @@ export default function DashboardView({
   onNavigate
 }: DashboardViewProps) {
   const { showToast } = useToast();
+  const [activeTrustCard, setActiveTrustCard] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -150,28 +155,45 @@ export default function DashboardView({
     setFocusedIndex(-1);
   }, [searchQuery]);
   
+  // Calculate intelligent trend score taking into account base popularity, history, time of day, and categories
+  const getDynamicTrendScore = (tool: typeof TOOLS[0]) => {
+    let score = tool.popularScore;
+
+    // 1. History Usage Bonus
+    const usageCount = history.filter((h) => h.toolId === tool.id).length;
+    score += usageCount * 15;
+
+    // 2. Category Match Bonus
+    if (selectedCategory && tool.category === selectedCategory) {
+      score += 35;
+    }
+
+    // 3. Time of Day Bonus
+    const hour = new Date().getHours();
+    if (hour >= 9 && hour <= 17) {
+      // Work hours: Boost developer & converter tools
+      if (tool.category === 'developer' || tool.category === 'converter') {
+        score += 20;
+      }
+    } else {
+      // Off hours: Boost generators and calculators
+      if (tool.category === 'generator' || tool.category === 'calculator') {
+        score += 20;
+      }
+    }
+
+    // 4. Version Bonus
+    if (parseFloat(tool.version) >= 1.3) {
+      score += 10;
+    }
+
+    return score;
+  };
+
   // Calculate featured tool using intelligent scoring algorithm
   const getIntelligentFeaturedTool = () => {
-    const currentMonth = new Date().getMonth();
     const scoredTools = TOOLS.map((tool) => {
-      let score = tool.popularScore;
-      
-      // Seasonal bonuses
-      if (currentMonth === 6 && tool.id === 'json-formatter') score += 20;
-      if (currentMonth === 11 && tool.id === 'age-calculator') score += 20;
-      if ((currentMonth === 4 || currentMonth === 5) && tool.id === 'word-counter') score += 20;
-      
-      // History bonus
-      const inHistoryIdx = history.findIndex((h) => h.toolId === tool.id);
-      if (inHistoryIdx !== -1) {
-        score += (5 - inHistoryIdx) * 2;
-      }
-      
-      // New version bonus
-      if (parseFloat(tool.version) >= 1.4) {
-        score += 5;
-      }
-      
+      const score = getDynamicTrendScore(tool);
       return { tool, score };
     });
     
@@ -206,7 +228,7 @@ export default function DashboardView({
       .map((id) => TOOLS.find((t) => t.id === id))
       .filter((t) => !!t) as typeof TOOLS;
   } else if (workspaceFilter === 'trending') {
-    displayedTools = [...TOOLS].sort((a, b) => b.popularScore - a.popularScore);
+    displayedTools = [...TOOLS].sort((a, b) => getDynamicTrendScore(b) - getDynamicTrendScore(a));
   } else if (workspaceFilter === 'new') {
     displayedTools = [...TOOLS].sort((a, b) => parseFloat(b.version) - parseFloat(a.version));
   }
@@ -432,63 +454,96 @@ export default function DashboardView({
           <p className="mt-2 font-sans font-extrabold text-xl sm:text-2xl text-gray-950 dark:text-white tracking-tight">
             Security Guarantee by Architecture, Not Promises
           </p>
+          <p className="mt-2 font-sans text-xs text-gray-400 dark:text-gray-500">
+            Click any badge below to audit raw architectural technical specifications.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
           {/* Card 1 */}
-          <div className="group rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900">
+          <button
+            onClick={() => setActiveTrustCard('offline')}
+            className="group text-left rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900 cursor-pointer active:scale-98 hover:-translate-y-0.5 w-full"
+          >
             <div className="h-10 w-10 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <ShieldCheck size={20} />
             </div>
-            <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Works Offline</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Works Offline</h3>
+              <span className="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">Specs &rarr;</span>
+            </div>
             <p className="mt-2 font-sans text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
               Open the site anywhere. All utility calculators run natively without network connection.
             </p>
-          </div>
+          </button>
 
           {/* Card 2 */}
-          <div className="group rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900">
+          <button
+            onClick={() => setActiveTrustCard('privacy')}
+            className="group text-left rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900 cursor-pointer active:scale-98 hover:-translate-y-0.5 w-full"
+          >
             <div className="h-10 w-10 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <EyeOff size={20} />
             </div>
-            <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Privacy Absolute</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Privacy Absolute</h3>
+              <span className="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">Specs &rarr;</span>
+            </div>
             <p className="mt-2 font-sans text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
               Your source codes, keys, and documents never contact remote servers. 100% confidential.
             </p>
-          </div>
+          </button>
 
           {/* Card 3 */}
-          <div className="group rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900">
+          <button
+            onClick={() => setActiveTrustCard('accounts')}
+            className="group text-left rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900 cursor-pointer active:scale-98 hover:-translate-y-0.5 w-full"
+          >
             <div className="h-10 w-10 rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <Lock size={20} />
             </div>
-            <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">No Accounts</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">No Accounts</h3>
+              <span className="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">Specs &rarr;</span>
+            </div>
             <p className="mt-2 font-sans text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
               No logins, no password requirements, no tracking databases, no marketing emails.
             </p>
-          </div>
+          </button>
 
           {/* Card 4 */}
-          <div className="group rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900">
+          <button
+            onClick={() => setActiveTrustCard('speed')}
+            className="group text-left rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900 cursor-pointer active:scale-98 hover:-translate-y-0.5 w-full"
+          >
             <div className="h-10 w-10 rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <Zap size={20} />
             </div>
-            <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Deterministic Speed</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Deterministic Speed</h3>
+              <span className="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">Specs &rarr;</span>
+            </div>
             <p className="mt-2 font-sans text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
               Instantaneous calculations using compiled browser JavaScript, WASM, and Canvas engines.
             </p>
-          </div>
+          </button>
 
           {/* Card 5 */}
-          <div className="group rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900">
+          <button
+            onClick={() => setActiveTrustCard('free')}
+            className="group text-left rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900 cursor-pointer active:scale-98 hover:-translate-y-0.5 w-full"
+          >
             <div className="h-10 w-10 rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-950/30 dark:text-violet-400 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <Cpu size={20} />
             </div>
-            <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Free Forever</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Free Forever</h3>
+              <span className="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">Specs &rarr;</span>
+            </div>
             <p className="mt-2 font-sans text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
               All tools are completely free with zero hidden paywalls or subscription barriers.
             </p>
-          </div>
+          </button>
         </div>
       </section>
 
@@ -823,6 +878,20 @@ export default function DashboardView({
           )}
         </AnimatePresence>
       </section>
+
+      {/* Narrative Storytelling and FAQs (only displayed when on initial home state to avoid search clutter) */}
+      {!searchQuery && !selectedCategory && workspaceFilter === 'all' && (
+        <div className="animate-fade-in duration-500">
+          <WhyBrowserOnly />
+          <HowItWorks />
+          <DeveloperQuality />
+          <PrivacyPromise />
+          <FAQSection />
+        </div>
+      )}
+
+      {/* Interactive Trust Detail Modal Overlay */}
+      <TrustDetailModal cardId={activeTrustCard} onClose={() => setActiveTrustCard(null)} />
     </motion.div>
   );
 }

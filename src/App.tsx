@@ -13,6 +13,7 @@ import ComingSoonModal from './components/ComingSoonModal';
 import StaticView from './components/StaticView';
 import DashboardView from './components/DashboardView';
 import ReviewView from './components/ReviewView';
+import DesignSystemView from './components/DesignSystemView';
 
 // Core Tool Engines
 import TextEngine from './components/TextEngine';
@@ -46,6 +47,16 @@ export default function App() {
     if (savedFontSize) setSizeMode(savedFontSize as 'sm' | 'base' | 'lg');
     const savedTheme = localStorage.getItem('smartutils_theme');
     if (savedTheme) setThemeMode(savedTheme as 'light' | 'dark');
+  }, []);
+
+  // Set category filter listener from Command Palette
+  useEffect(() => {
+    const handleSetCategory = (e: Event) => {
+      const catId = (e as CustomEvent).detail;
+      setSelectedCategory(catId);
+    };
+    window.addEventListener('smartutils-set-category', handleSetCategory);
+    return () => window.removeEventListener('smartutils-set-category', handleSetCategory);
   }, []);
 
   // Global Keydown Event Listeners for Command Center and Hotkeys
@@ -229,6 +240,8 @@ export default function App() {
               ? renderToolView(currentView.replace('tool-', ''))
               : currentView === 'review'
               ? <ReviewView onBack={() => navigateTo('home')} onNavigate={navigateTo} />
+              : currentView === 'design-system'
+              ? <DesignSystemView onBack={() => navigateTo('home')} />
               : <StaticView view={currentView} onBack={() => navigateTo('home')} />}
           </motion.div>
         )}
