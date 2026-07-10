@@ -4,6 +4,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import ToolLayout from './components/ToolLayout';
 import { TOOLS } from './data/tools';
+import { useToast } from './components/Toast';
 
 // Decoupled Router & Platform components
 import CommandPalette from './components/CommandPalette';
@@ -21,6 +22,7 @@ import ImageEngine from './components/ImageEngine';
 import PDFEngine from './components/PDFEngine';
 
 export default function App() {
+  const { showToast } = useToast();
   const [currentView, setCurrentView] = useState('home');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState('global');
@@ -101,10 +103,14 @@ export default function App() {
 
   const toggleFavorite = (id: string) => {
     let updated: string[];
+    const tool = TOOLS.find(t => t.id === id);
+    const toolName = tool ? tool.name : 'Tool';
     if (favorites.includes(id)) {
       updated = favorites.filter((favId) => favId !== id);
+      showToast(`Removed "${toolName}" from bookmarked tools`, 'info');
     } else {
       updated = [...favorites, id];
+      showToast(`Saved "${toolName}" to bookmarked tools!`, 'success');
     }
     setFavorites(updated);
     localStorage.setItem('smartutils_favorites', JSON.stringify(updated));

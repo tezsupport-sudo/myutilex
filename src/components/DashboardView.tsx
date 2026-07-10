@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { TOOLS, CATEGORIES } from '../data/tools';
 import ToolCard from './ToolCard';
+import { useToast } from './Toast';
 
 interface DashboardViewProps {
   selectedCategory: string | null;
@@ -50,12 +51,36 @@ export default function DashboardView({
   setHistory,
   onNavigate
 }: DashboardViewProps) {
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
   
   // Interactive stats states that animate on mount
   const [activeCount, setActiveCount] = useState(0);
   const [safetyPercent, setSafetyPercent] = useState(0);
   const [latencyMs, setLatencyMs] = useState(20);
+  const [isBenchmarking, setIsBenchmarking] = useState(false);
+
+  const runLiveLatencyBenchmark = () => {
+    if (isBenchmarking) return;
+    setIsBenchmarking(true);
+    showToast('Running live client-side execution benchmark on your processor...', 'info');
+    
+    setTimeout(() => {
+      const start = performance.now();
+      let x = 0;
+      for (let i = 0; i < 1000000; i++) {
+        x += Math.sin(i) * Math.cos(i);
+      }
+      const end = performance.now();
+      const duration = end - start;
+      setLatencyMs(parseFloat(duration.toFixed(2)));
+      setIsBenchmarking(false);
+      showToast(`Benchmarked! Your processor executed 1,000,000 equations in exactly ${duration.toFixed(2)}ms!`, 'success');
+    }, 120);
+  };
 
   useEffect(() => {
     const duration = 1000;
@@ -78,6 +103,52 @@ export default function DashboardView({
 
     return () => clearInterval(timer);
   }, []);
+
+  // Global key listener for '/' to focus search
+  useEffect(() => {
+    const handleGlobalSlash = (e: KeyboardEvent) => {
+      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+    window.addEventListener('keydown', handleGlobalSlash);
+    return () => window.removeEventListener('keydown', handleGlobalSlash);
+  }, []);
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('smartutils_recent_searches');
+    if (saved) {
+      try {
+        setRecentSearches(JSON.parse(saved));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }, []);
+
+  const saveRecentSearch = (term: string) => {
+    if (!term.trim()) return;
+    setRecentSearches((prev) => {
+      const filtered = prev.filter((t) => t.toLowerCase() !== term.trim().toLowerCase());
+      const updated = [term.trim(), ...filtered].slice(0, 5);
+      localStorage.setItem('smartutils_recent_searches', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const clearRecentSearches = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRecentSearches([]);
+    localStorage.removeItem('smartutils_recent_searches');
+  };
+
+  // Reset index when search updates
+  useEffect(() => {
+    setFocusedIndex(-1);
+  }, [searchQuery]);
   
   // Calculate featured tool using intelligent scoring algorithm
   const getIntelligentFeaturedTool = () => {
@@ -161,6 +232,30 @@ export default function DashboardView({
     { label: 'Base64 Converter', term: 'Base64' }
   ];
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (finalTools.length === 0) return;
+    
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev < finalTools.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev > 0 ? prev - 1 : finalTools.length - 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const targetIndex = focusedIndex >= 0 ? focusedIndex : 0;
+      if (finalTools[targetIndex]) {
+        saveRecentSearch(finalTools[targetIndex].name);
+        onNavigate(`tool-${finalTools[targetIndex].id}`);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setSearchQuery('');
+      setFocusedIndex(-1);
+      searchInputRef.current?.blur();
+    }
+  };
+
   return (
     <motion.div
       key="home"
@@ -205,10 +300,12 @@ export default function DashboardView({
             <div className="group relative rounded-2xl border border-gray-200 bg-white/70 shadow-[0_4px_24px_rgba(0,0,0,0.02)] backdrop-blur-md transition-all duration-300 hover:border-gray-400 hover:shadow-[0_8px_32px_rgba(0,0,0,0.05)] dark:border-gray-800 dark:bg-gray-900/60 dark:hover:border-gray-700">
               <Search className="absolute left-5 top-1/2 h-5.5 w-5.5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="What utility can we boot for you? (e.g. Word, JSON, Age, Password)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="w-full rounded-2xl border-none bg-transparent py-4.5 pl-13 pr-11 font-sans text-sm md:text-base text-gray-950 placeholder-gray-400 outline-none focus:ring-0 dark:text-white"
                 id="central-search-input"
               />
@@ -220,14 +317,14 @@ export default function DashboardView({
                   <X size={14} />
                 </button>
               ) : (
-                <div className="absolute right-5 top-1/2 -translate-y-1/2 hidden sm:flex items-center space-x-0.5 bg-gray-50 border border-gray-200 rounded px-2 py-0.5 text-[9px] font-mono text-gray-400 font-bold dark:bg-gray-800 dark:border-gray-700">
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 hidden sm:flex items-center space-x-0.5 bg-gray-50 border border-gray-200 rounded px-2 py-0.5 text-[9px] font-mono text-gray-400 font-bold dark:bg-gray-800 dark:border-gray-700" title="Press / to focus search">
                   <span>/</span>
                 </div>
               )}
             </div>
 
             {/* Live Suggestion Badges */}
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-gray-400">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-xs text-gray-400">
               <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-gray-400 mr-1 flex items-center gap-1">
                 <Compass size={11} /> Popular:
               </span>
@@ -235,12 +332,36 @@ export default function DashboardView({
                 <button
                   key={item.label}
                   onClick={() => setSearchQuery(item.term)}
-                  className="rounded-full border border-gray-200/50 bg-white/40 px-3 py-1 font-sans text-xs text-gray-600 hover:bg-white hover:text-gray-900 dark:border-gray-800 dark:bg-gray-900/30 dark:text-gray-400 dark:hover:bg-gray-850 dark:hover:text-white transition-all shadow-xs"
+                  className="rounded-full border border-gray-200/50 bg-white/40 px-3 py-1 font-sans text-xs text-gray-600 hover:bg-white hover:text-gray-900 dark:border-gray-800 dark:bg-gray-900/30 dark:text-gray-400 dark:hover:bg-gray-850 dark:hover:text-white transition-all shadow-xs cursor-pointer"
                 >
                   {item.label}
                 </button>
               ))}
             </div>
+
+            {/* Recent Searches Line */}
+            {recentSearches.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-xs text-gray-400 animate-fade-in">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-gray-400 mr-1 flex items-center gap-1">
+                  <HistoryIcon size={11} /> Recents:
+                </span>
+                {recentSearches.map((term) => (
+                  <button
+                    key={term}
+                    onClick={() => setSearchQuery(term)}
+                    className="rounded-full border border-gray-200/40 bg-gray-50/50 px-2.5 py-0.5 font-sans text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-950 dark:border-gray-800 dark:bg-gray-900/20 dark:text-gray-400 dark:hover:bg-gray-850 dark:hover:text-white transition-all shadow-xs cursor-pointer"
+                  >
+                    {term}
+                  </button>
+                ))}
+                <button
+                  onClick={clearRecentSearches}
+                  className="text-[9px] font-mono text-gray-400 hover:text-rose-500 underline ml-1 cursor-pointer"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Premium Call to Actions */}
@@ -285,12 +406,16 @@ export default function DashboardView({
                 Bytes Uploaded
               </span>
             </div>
-            <div className="text-center p-2 border-l border-gray-150 dark:border-gray-900">
-              <span className="block font-mono text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none">
+            <div 
+              onClick={runLiveLatencyBenchmark}
+              className="text-center p-2 border-l border-gray-150 dark:border-gray-900 cursor-pointer hover:bg-emerald-50/10 active:scale-95 transition-all rounded-r-xl group/stats"
+              title="Click to run live local-speed benchmark on your machine!"
+            >
+              <span className={`block font-mono text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none ${isBenchmarking ? 'animate-pulse' : ''}`}>
                 &lt; {latencyMs}ms
               </span>
-              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                Engine Latency
+              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover/stats:text-emerald-500 transition-colors">
+                {isBenchmarking ? 'Testing...' : 'Engine Latency ⚡'}
               </span>
             </div>
           </div>
@@ -655,7 +780,11 @@ export default function DashboardView({
                 >
                   <ToolCard
                     tool={tool}
-                    onClick={() => onNavigate(`tool-${tool.id}`)}
+                    isFocused={focusedIndex === idx}
+                    onClick={() => {
+                      saveRecentSearch(tool.name);
+                      onNavigate(`tool-${tool.id}`);
+                    }}
                     isFavorite={favorites.includes(tool.id)}
                     onToggleFavorite={(e) => {
                       e.stopPropagation();

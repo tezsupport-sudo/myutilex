@@ -8,6 +8,7 @@ interface ToolCardProps {
   onClick: () => void;
   isFavorite: boolean;
   onToggleFavorite: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  isFocused?: boolean;
   key?: any;
 }
 
@@ -29,12 +30,16 @@ const getIcon = (name: string, className: string) => {
   }
 };
 
-export default function ToolCard({ tool, onClick, isFavorite, onToggleFavorite }: ToolCardProps) {
+export default function ToolCard({ tool, onClick, isFavorite, onToggleFavorite, isFocused = false }: ToolCardProps) {
   return (
     <motion.div
       whileHover={{ y: -4, scale: 1.01 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="group relative cursor-pointer rounded-xl border border-gray-200 bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-indigo-500/50 hover:shadow-[0_12px_30px_rgba(99,102,241,0.06)] dark:hover:shadow-[0_12px_30px_rgba(99,102,241,0.03)] transition-all duration-200 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-400/30"
+      className={`group relative cursor-pointer rounded-xl border p-5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all duration-200 dark:hover:shadow-[0_12px_30px_rgba(99,102,241,0.03)] ${
+        isFocused 
+          ? 'border-indigo-600 ring-2 ring-indigo-500/25 bg-indigo-50/10 dark:border-indigo-400 dark:bg-indigo-950/20 shadow-[0_12px_30px_rgba(99,102,241,0.06)]' 
+          : 'border-gray-200 bg-white hover:border-indigo-500/50 hover:shadow-[0_12px_30px_rgba(99,102,241,0.06)] dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-400/30'
+      }`}
       onClick={onClick}
       id={`tool-card-${tool.id}`}
     >
