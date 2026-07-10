@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply font-sans text-gray-950 bg-[#FAF9F6] antialiased selection:bg-gray-900 selection:text-white;
+  }
+}
+
+/* Custom smooth transitions and animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Dark Mode Core Theme Injectors */
+.dark {
+  color-scheme: dark;
+}
+.dark .bg-white {
+  background-color: #111827 !important; /* Elegant dark grey-black card */
+}
+.dark .text-gray-950, .dark .text-gray-900, .dark .text-gray-800 {
+  color: #f9fafb !important;
+}
+.dark .text-gray-700, .dark .text-gray-600, .dark .text-gray-500 {
+  color: #d1d5db !important;
+}
+.dark .text-gray-400 {
+  color: #9ca3af !important;
+}
+.dark .border-gray-200, .dark .border-gray-100, .dark .border-t, .dark .border-b {
+  border-color: #374151 !important; /* Elegant dark border */
+}
+.dark .bg-[#FAF9F6] {
+  background-color: #030712 !important; /* Absolute deep grey-black background */
+}
+.dark .bg-gray-50, .dark .bg-gray-100 {
+  background-color: #1f2937 !important; /* Medium dark grey bg */
+}
+.dark input, .dark select, .dark textarea {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-color: #4b5563 !important;
+}
+.dark input::placeholder, .dark textarea::placeholder {
+  color: #6b7280 !important;
+}
+.dark header, .dark footer {
+  background-color: #111827 !important;
+}
+
+/* Compact Mode Spacing Injectors */
+.compact .py-16 {
+  padding-top: 1.5rem !important;
+  padding-bottom: 1.5rem !important;
+}
+.compact .py-12 {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+.compact .py-8 {
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+.compact .pt-10 {
+  padding-top: 0.5rem !important;
+}
+.compact .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.75rem !important;
+}
+.compact .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.5rem !important;
+}
+.compact .p-6, .compact .p-5, .compact .md:p-6 {
+  padding: 0.85rem !important;
+}
+.compact .grid {
+  gap: 0.75rem !important;
+}
+

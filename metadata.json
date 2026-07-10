@@ -1,0 +1,6 @@
+{
+  "name": "Utility Hub",
+  "description": "A highly-polished client-side global toolkit for text, developer, calculator, generator, and converter operations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
