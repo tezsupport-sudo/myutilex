@@ -33,14 +33,23 @@ const wordCounterPlugin: TextPlugin = {
     const paragraphs = text.trim() === '' ? [] : text.split(/\n+/).filter(p => p.trim().length > 0);
     const paragraphCount = paragraphs.length;
 
-    const readingTime = Math.ceil(wordCount / 200);
+    // Premium formatted Reading / Speaking durations
+    const formatDuration = (wpm: number): string => {
+      if (wordCount === 0) return '0s';
+      const totalSeconds = Math.round((wordCount / wpm) * 60);
+      if (totalSeconds < 60) return `${totalSeconds}s`;
+      const minutes = Math.floor(totalSeconds / 60);
+      const remainingSeconds = totalSeconds % 60;
+      return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+    };
 
     return [
       { label: 'Words', value: wordCount },
       { label: 'Characters', value: charCount },
       { label: 'Sentences', value: sentenceCount },
       { label: 'Paragraphs', value: paragraphCount },
-      { label: 'Reading Time', value: `${readingTime} ${readingTime === 1 ? 'min' : 'mins'}`, isAccent: true }
+      { label: 'Reading Time', value: formatDuration(200), isAccent: true },
+      { label: 'Speaking Time', value: formatDuration(130), isAccent: true }
     ];
   },
   actions: [

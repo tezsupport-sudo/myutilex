@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, 
@@ -16,7 +16,13 @@ import {
   TrendingUp, 
   Trash2, 
   HelpCircle,
-  X
+  X,
+  ShieldCheck,
+  EyeOff,
+  Cpu,
+  Zap,
+  Lock,
+  Compass
 } from 'lucide-react';
 import { TOOLS, CATEGORIES } from '../data/tools';
 import ToolCard from './ToolCard';
@@ -45,6 +51,33 @@ export default function DashboardView({
   onNavigate
 }: DashboardViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Interactive stats states that animate on mount
+  const [activeCount, setActiveCount] = useState(0);
+  const [safetyPercent, setSafetyPercent] = useState(0);
+  const [latencyMs, setLatencyMs] = useState(20);
+
+  useEffect(() => {
+    const duration = 1000;
+    const steps = 40;
+    const stepTime = duration / steps;
+    let currentStep = 0;
+
+    const timer = setInterval(() => {
+      currentStep++;
+      const ratio = currentStep / steps;
+      
+      setActiveCount(Math.min(Math.round(ratio * 20), 20));
+      setSafetyPercent(Math.min(Math.round(ratio * 100), 100));
+      setLatencyMs(Math.max(5, Math.round(20 - ratio * 15)));
+
+      if (currentStep >= steps) {
+        clearInterval(timer);
+      }
+    }, stepTime);
+
+    return () => clearInterval(timer);
+  }, []);
   
   // Calculate featured tool using intelligent scoring algorithm
   const getIntelligentFeaturedTool = () => {
@@ -76,49 +109,6 @@ export default function DashboardView({
   };
 
   const featuredTool = getIntelligentFeaturedTool();
-
-  // Helper mapping for category styles
-  const getCategoryStyles = (id: string, isSelected: boolean) => {
-    const baseColors = {
-      text: {
-        bg: 'bg-violet-50/60 dark:bg-violet-950/20',
-        text: 'text-violet-600 dark:text-violet-400',
-        border: 'border-violet-100/80 dark:border-violet-900/30',
-        active: 'bg-violet-600 border-violet-600 text-white dark:bg-violet-500 dark:border-violet-500'
-      },
-      calculator: {
-        bg: 'bg-emerald-50/60 dark:bg-emerald-950/20',
-        text: 'text-emerald-600 dark:text-emerald-400',
-        border: 'border-emerald-100/80 dark:border-emerald-900/30',
-        active: 'bg-emerald-600 border-emerald-600 text-white dark:bg-emerald-500 dark:border-emerald-500'
-      },
-      developer: {
-        bg: 'bg-indigo-50/60 dark:bg-indigo-950/20',
-        text: 'text-indigo-600 dark:text-indigo-400',
-        border: 'border-indigo-100/80 dark:border-indigo-900/30',
-        active: 'bg-indigo-600 border-indigo-600 text-white dark:bg-indigo-500 dark:border-indigo-500'
-      },
-      generator: {
-        bg: 'bg-rose-50/60 dark:bg-rose-950/20',
-        text: 'text-rose-600 dark:text-rose-400',
-        border: 'border-rose-100/80 dark:border-rose-900/30',
-        active: 'bg-rose-600 border-rose-600 text-white dark:bg-rose-500 dark:border-rose-500'
-      },
-      converter: {
-        bg: 'bg-amber-50/60 dark:bg-amber-950/20',
-        text: 'text-amber-600 dark:text-amber-400',
-        border: 'border-amber-100/80 dark:border-amber-900/30',
-        active: 'bg-amber-600 border-amber-600 text-white dark:bg-amber-500 dark:border-amber-500'
-      }
-    }[id] || {
-      bg: 'bg-gray-50/60 dark:bg-gray-800/30',
-      text: 'text-gray-600 dark:text-gray-400',
-      border: 'border-gray-100 dark:border-gray-800',
-      active: 'bg-gray-900 border-gray-900 text-white dark:bg-gray-100 dark:text-gray-950'
-    };
-
-    return isSelected ? baseColors.active : `${baseColors.bg} ${baseColors.text} ${baseColors.border}`;
-  };
 
   const getCategoryIcon = (id: string, className: string) => {
     switch (id) {
@@ -164,11 +154,11 @@ export default function DashboardView({
     : displayedTools;
 
   const popularSearches = [
-    { label: 'JSON Formatter', term: 'JSON' },
     { label: 'Word Counter', term: 'Word' },
-    { label: 'Image Compressor', term: 'Image' },
-    { label: 'PDF Merger', term: 'PDF' },
-    { label: 'Secure Password', term: 'Password' }
+    { label: 'JSON Formatter', term: 'JSON' },
+    { label: 'Age Calculator', term: 'Age' },
+    { label: 'Password Generator', term: 'Password' },
+    { label: 'Base64 Converter', term: 'Base64' }
   ];
 
   return (
@@ -181,103 +171,198 @@ export default function DashboardView({
       className="flex-1 pb-16"
     >
       {/* Visual Identity Hero Section with Premium Craft Elements */}
-      <section className="relative overflow-hidden border-b border-gray-200 bg-white py-16 md:py-24 text-center transition-all duration-300 dark:bg-gray-950 dark:border-gray-800" id="hero-banner-section">
+      <section className="relative overflow-hidden border-b border-gray-150 bg-white py-20 md:py-28 text-center transition-all duration-300 dark:bg-gray-950 dark:border-gray-900" id="hero-banner-section">
         {/* Subtle decorative grid lines representing modern product sheets */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:16px_28px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)]"></div>
         
-        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <motion.span 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1.5 font-mono text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400 uppercase tracking-widest border border-emerald-100/80 dark:border-emerald-900/20"
+        {/* Animated ambient light orb behind content */}
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-80 w-[500px] bg-gradient-to-r from-indigo-500/10 via-violet-500/5 to-rose-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50/75 px-3.5 py-1.5 font-mono text-[10px] font-bold text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400 uppercase tracking-wider border border-indigo-100/50 dark:border-indigo-900/30 shadow-xs"
           >
-            <Sparkles size={11} className="text-emerald-500 animate-pulse" />
-            100% Browser-Local Security • No Server Uploads
-          </motion.span>
+            <Sparkles size={11} className="text-indigo-500 animate-pulse shrink-0" />
+            <span>Premium local-first design initiative</span>
+          </motion.div>
           
-          <h1 className="mt-6 font-display font-extrabold text-3xl tracking-tight text-gray-950 sm:text-5xl leading-tight dark:text-white">
-            Professional Utility Tools<br />
+          <h1 className="mt-6 font-sans font-extrabold text-3xl tracking-tight text-gray-950 sm:text-6xl leading-none dark:text-white max-w-4xl mx-auto">
+            A Single Private Toolbox for <br className="hidden sm:inline" />
             <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-rose-500 bg-clip-text text-transparent dark:from-indigo-400 dark:to-rose-400">
-              Built for Speed. Privacy. Productivity.
+              Every Daily Task
             </span>
           </h1>
           
-          <p className="mx-auto mt-4 max-w-2xl font-sans text-sm md:text-base text-gray-500 dark:text-gray-400 leading-relaxed">
-            1000+ privacy-first browser utilities. No uploads. No tracking. No installation. Run all formats, calculations, and compression workflows entirely inside your browser cache with cryptographic speed.
+          <p className="mx-auto mt-6 max-w-2xl font-sans text-sm md:text-base text-gray-500 dark:text-gray-400 leading-relaxed">
+            Run powerful developers, calculators, converters, and generators 100% locally on your own hardware. Zero server uploads. Zero registration required. Infinite sandbox speed.
           </p>
 
-          {/* Premium Trust Badges */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-gray-600 dark:text-gray-300">
-            <span className="flex items-center gap-1 bg-gray-50/80 dark:bg-gray-900/60 px-3 py-1 rounded-full border border-gray-200/50 dark:border-gray-850">
-              <span className="text-emerald-500 font-bold">✔</span> Offline
-            </span>
-            <span className="flex items-center gap-1 bg-gray-50/80 dark:bg-gray-900/60 px-3 py-1 rounded-full border border-gray-200/50 dark:border-gray-850">
-              <span className="text-emerald-500 font-bold">✔</span> Secure
-            </span>
-            <span className="flex items-center gap-1 bg-gray-50/80 dark:bg-gray-900/60 px-3 py-1 rounded-full border border-gray-200/50 dark:border-gray-850">
-              <span className="text-emerald-500 font-bold">✔</span> No Login
-            </span>
-            <span className="flex items-center gap-1 bg-gray-50/80 dark:bg-gray-900/60 px-3 py-1 rounded-full border border-gray-200/50 dark:border-gray-850">
-              <span className="text-emerald-500 font-bold">✔</span> Free
-            </span>
-          </div>
-
-          {/* Premium Call to Actions */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <button
-              onClick={() => document.getElementById('tools-showcase-grid')?.scrollIntoView({ behavior: 'smooth' })}
-              className="rounded-xl bg-gray-950 px-6 py-3 font-sans text-sm font-semibold text-white shadow-lg hover:bg-indigo-600 hover:shadow-indigo-500/10 active:scale-95 transition-all duration-200 dark:bg-white dark:text-gray-950 dark:hover:bg-indigo-500 dark:hover:text-white cursor-pointer"
-            >
-              Start Using Tools
-            </button>
-            <button
-              onClick={() => document.getElementById('category-bento-grid')?.scrollIntoView({ behavior: 'smooth' })}
-              className="rounded-xl border border-gray-200 bg-white/50 backdrop-blur px-6 py-3 font-sans text-sm font-semibold text-gray-800 hover:border-gray-400 hover:bg-white active:scale-95 transition-all duration-200 dark:border-gray-800 dark:bg-gray-900/40 dark:text-white dark:hover:border-gray-700 dark:hover:bg-gray-900 cursor-pointer"
-            >
-              Explore Categories
-            </button>
-          </div>
-
           {/* Majestic Hero Central Search Hub */}
-          <div className="mx-auto mt-10 max-w-xl relative" id="hero-search-hub">
-            <div className="group relative rounded-xl border border-gray-200 bg-white/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-200 hover:border-gray-400 hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] dark:border-gray-800 dark:bg-gray-900/60 dark:hover:border-gray-700">
-              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+          <div className="mx-auto mt-10 max-w-2xl relative" id="hero-search-hub">
+            <div className="group relative rounded-2xl border border-gray-200 bg-white/70 shadow-[0_4px_24px_rgba(0,0,0,0.02)] backdrop-blur-md transition-all duration-300 hover:border-gray-400 hover:shadow-[0_8px_32px_rgba(0,0,0,0.05)] dark:border-gray-800 dark:bg-gray-900/60 dark:hover:border-gray-700">
+              <Search className="absolute left-5 top-1/2 h-5.5 w-5.5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
-                placeholder="What tool do you need? (e.g. JSON, Word, Compressor)"
+                placeholder="What utility can we boot for you? (e.g. Word, JSON, Age, Password)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border-none bg-transparent py-3.5 pl-12 pr-10 font-sans text-sm md:text-base text-gray-900 placeholder-gray-400 outline-none focus:ring-0 dark:text-white"
+                className="w-full rounded-2xl border-none bg-transparent py-4.5 pl-13 pr-11 font-sans text-sm md:text-base text-gray-950 placeholder-gray-400 outline-none focus:ring-0 dark:text-white"
                 id="central-search-input"
               />
               {searchQuery ? (
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-950 dark:hover:text-white p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-950 dark:hover:text-white p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-850"
                 >
                   <X size={14} />
                 </button>
               ) : (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden sm:flex items-center space-x-0.5 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5 text-[9px] font-mono text-gray-400 font-bold dark:bg-gray-800 dark:border-gray-700">
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 hidden sm:flex items-center space-x-0.5 bg-gray-50 border border-gray-200 rounded px-2 py-0.5 text-[9px] font-mono text-gray-400 font-bold dark:bg-gray-800 dark:border-gray-700">
                   <span>/</span>
                 </div>
               )}
             </div>
 
             {/* Live Suggestion Badges */}
-            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-1.5 text-xs text-gray-400">
-              <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-gray-400 mr-1">Popular:</span>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-gray-400">
+              <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-gray-400 mr-1 flex items-center gap-1">
+                <Compass size={11} /> Popular:
+              </span>
               {popularSearches.map((item) => (
                 <button
                   key={item.label}
                   onClick={() => setSearchQuery(item.term)}
-                  className="rounded-full border border-gray-200/60 bg-gray-50/50 px-2.5 py-1 font-medium hover:bg-gray-100 hover:text-gray-900 transition-all dark:border-gray-800 dark:bg-gray-900/40 dark:hover:bg-gray-800 dark:hover:text-white"
+                  className="rounded-full border border-gray-200/50 bg-white/40 px-3 py-1 font-sans text-xs text-gray-600 hover:bg-white hover:text-gray-900 dark:border-gray-800 dark:bg-gray-900/30 dark:text-gray-400 dark:hover:bg-gray-850 dark:hover:text-white transition-all shadow-xs"
                 >
                   {item.label}
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Premium Call to Actions */}
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={() => document.getElementById('tools-showcase-grid')?.scrollIntoView({ behavior: 'smooth' })}
+              className="rounded-xl bg-gray-950 px-6 py-3.5 font-sans text-xs font-bold text-white shadow-md hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/10 active:scale-98 transition-all duration-200 dark:bg-white dark:text-gray-950 dark:hover:bg-indigo-500 dark:hover:text-white cursor-pointer"
+            >
+              Explore {activeCount}+ Active Tools
+            </button>
+            <button
+              onClick={() => onNavigate('about')}
+              className="rounded-xl border border-gray-200 bg-white/50 backdrop-blur-xs px-6 py-3.5 font-sans text-xs font-bold text-gray-700 hover:border-gray-400 hover:bg-white active:scale-98 transition-all duration-200 dark:border-gray-800 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900 cursor-pointer"
+            >
+              How local-first works
+            </button>
+          </div>
+
+          {/* Animated Statistics Banner Widget */}
+          <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-4 max-w-4xl mx-auto border border-gray-150 rounded-2xl bg-gray-50/40 p-5 backdrop-blur-xs dark:border-gray-900 dark:bg-gray-950/20" id="animated-stats-banner">
+            <div className="text-center p-2">
+              <span className="block font-mono text-2xl font-black text-gray-950 dark:text-white leading-none">
+                {activeCount}+
+              </span>
+              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Active Modules
+              </span>
+            </div>
+            <div className="text-center p-2 border-l border-gray-150 dark:border-gray-900">
+              <span className="block font-mono text-2xl font-black text-indigo-600 dark:text-indigo-400 leading-none">
+                {safetyPercent}%
+              </span>
+              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Securely Local
+              </span>
+            </div>
+            <div className="text-center p-2 border-l border-gray-150 dark:border-gray-900">
+              <span className="block font-mono text-2xl font-black text-gray-950 dark:text-white leading-none">
+                0
+              </span>
+              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Bytes Uploaded
+              </span>
+            </div>
+            <div className="text-center p-2 border-l border-gray-150 dark:border-gray-900">
+              <span className="block font-mono text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none">
+                &lt; {latencyMs}ms
+              </span>
+              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Engine Latency
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* Trust & Guarantee Section (Directly under Hero) */}
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 border-b border-gray-150 dark:border-gray-900" id="trust-bento-cards">
+        <div className="text-center max-w-3xl mx-auto mb-10">
+          <h2 className="font-sans font-bold text-xs uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            A New Standard of Software Trust
+          </h2>
+          <p className="mt-2 font-sans font-extrabold text-xl sm:text-2xl text-gray-950 dark:text-white tracking-tight">
+            Security Guarantee by Architecture, Not Promises
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+          {/* Card 1 */}
+          <div className="group rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900">
+            <div className="h-10 w-10 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+              <ShieldCheck size={20} />
+            </div>
+            <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Works Offline</h3>
+            <p className="mt-2 font-sans text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+              Open the site anywhere. All utility calculators run natively without network connection.
+            </p>
+          </div>
+
+          {/* Card 2 */}
+          <div className="group rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900">
+            <div className="h-10 w-10 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+              <EyeOff size={20} />
+            </div>
+            <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Privacy Absolute</h3>
+            <p className="mt-2 font-sans text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+              Your source codes, keys, and documents never contact remote servers. 100% confidential.
+            </p>
+          </div>
+
+          {/* Card 3 */}
+          <div className="group rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900">
+            <div className="h-10 w-10 rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+              <Lock size={20} />
+            </div>
+            <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">No Accounts</h3>
+            <p className="mt-2 font-sans text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+              No logins, no password requirements, no tracking databases, no marketing emails.
+            </p>
+          </div>
+
+          {/* Card 4 */}
+          <div className="group rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900">
+            <div className="h-10 w-10 rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+              <Zap size={20} />
+            </div>
+            <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Deterministic Speed</h3>
+            <p className="mt-2 font-sans text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+              Instantaneous calculations using compiled browser JavaScript, WASM, and Canvas engines.
+            </p>
+          </div>
+
+          {/* Card 5 */}
+          <div className="group rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-400/50 hover:shadow-md transition-all duration-300 dark:border-gray-850 dark:bg-gray-900">
+            <div className="h-10 w-10 rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-950/30 dark:text-violet-400 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+              <Cpu size={20} />
+            </div>
+            <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">Free Forever</h3>
+            <p className="mt-2 font-sans text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+              All tools are completely free with zero hidden paywalls or subscription barriers.
+            </p>
           </div>
         </div>
       </section>
@@ -352,7 +437,6 @@ export default function DashboardView({
             const isSelected = selectedCategory === cat.id;
             const count = TOOLS.filter((t) => t.category === cat.id && !t.isPlanned).length;
             const plannedCount = TOOLS.filter((t) => t.category === cat.id && t.isPlanned).length;
-            const styleString = getCategoryStyles(cat.id, isSelected);
 
             return (
               <button
@@ -370,7 +454,7 @@ export default function DashboardView({
                 <div className="flex items-center gap-3 w-full">
                   <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-300 ${
                     isSelected 
-                      ? 'bg-indigo-600 text-white' 
+                      ? 'bg-indigo-600 text-white animate-pulse' 
                       : 'bg-gray-50 text-gray-800 dark:bg-gray-800 dark:text-white group-hover:bg-indigo-500 group-hover:text-white group-hover:scale-105 group-hover:rotate-3'
                   }`}>
                     {getCategoryIcon(cat.id, 'w-5 h-5')}
@@ -613,4 +697,3 @@ export default function DashboardView({
     </motion.div>
   );
 }
-
