@@ -258,31 +258,44 @@ export default function Header({
               <div className="absolute right-0 mt-2 w-72 rounded-lg border border-gray-100 bg-white p-2 shadow-xl ring-1 ring-black/5 z-50">
                 <div className="px-2.5 py-1.5 text-[11px] font-mono font-medium text-gray-400 uppercase tracking-wider border-b border-gray-50">Saved Shortcuts</div>
                 {favorites.length > 0 ? (
-                  <div className="mt-1 space-y-0.5 max-h-60 overflow-y-auto">
-                    {favorites.map((favId) => {
-                      const t = TOOLS.find((tool) => tool.id === favId);
-                      if (!t) return null;
-                      return (
-                        <div key={favId} className="flex items-center justify-between rounded-md px-2.5 py-1.5 hover:bg-gray-50">
-                          <button
-                            onClick={() => {
-                              onNavigate(`tool-${favId}`);
-                              setShowFavoritesDropdown(false);
-                            }}
-                            className="text-left text-xs font-medium text-gray-900 hover:underline truncate flex-1 pr-2"
-                          >
-                            {t.name}
-                          </button>
-                          <button 
-                            onClick={() => toggleFavorite(favId)} 
-                            className="text-rose-400 hover:text-rose-600 p-1 hover:bg-rose-50 rounded"
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <>
+                    <div className="mt-1 space-y-0.5 max-h-60 overflow-y-auto">
+                      {favorites.map((favId) => {
+                        const t = TOOLS.find((tool) => tool.id === favId);
+                        if (!t) return null;
+                        return (
+                          <div key={favId} className="flex items-center justify-between rounded-md px-2.5 py-1.5 hover:bg-gray-50">
+                            <button
+                              onClick={() => {
+                                onNavigate(`tool-${favId}`);
+                                setShowFavoritesDropdown(false);
+                              }}
+                              className="text-left text-xs font-medium text-gray-900 hover:underline truncate flex-1 pr-2 cursor-pointer"
+                            >
+                              {t.name}
+                            </button>
+                            <button 
+                              onClick={() => toggleFavorite(favId)} 
+                              className="text-rose-400 hover:text-rose-600 p-1 hover:bg-rose-50 rounded cursor-pointer"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 border-t border-gray-100 pt-2">
+                      <button
+                        onClick={() => {
+                          onNavigate('history-center');
+                          setShowFavoritesDropdown(false);
+                        }}
+                        className="w-full text-center text-[10px] font-mono font-bold text-indigo-600 hover:text-indigo-800 hover:underline py-1.5 cursor-pointer"
+                      >
+                        Manage Bookmarks &rarr;
+                      </button>
+                    </div>
+                  </>
                 ) : (
                   <div className="px-3 py-4 text-center text-xs text-gray-400">Click the heart icon on any tool layout page to bookmark.</div>
                 )}
@@ -311,27 +324,40 @@ export default function Header({
               <div className="absolute right-0 mt-2 w-72 rounded-lg border border-gray-100 bg-white p-2 shadow-xl ring-1 ring-black/5 z-50">
                 <div className="px-2.5 py-1.5 text-[11px] font-mono font-medium text-gray-400 uppercase tracking-wider border-b border-gray-50">Recently Visited</div>
                 {history.length > 0 ? (
-                  <div className="mt-1 space-y-0.5 max-h-60 overflow-y-auto">
-                    {history.slice(0, 8).map((hist, idx) => {
-                      const t = TOOLS.find((tool) => tool.id === hist.toolId);
-                      if (!t) return null;
-                      return (
-                        <button
-                          key={`${hist.toolId}-${idx}`}
-                          onClick={() => {
-                            onNavigate(`tool-${hist.toolId}`);
-                            setShowHistoryDropdown(false);
-                          }}
-                          className="flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-xs hover:bg-gray-50 transition-colors"
-                        >
-                          <span className="font-medium text-gray-800 truncate pr-2">{t.name}</span>
-                          <span className="text-[10px] font-mono text-gray-400 shrink-0">
-                            {new Date(hist.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <>
+                    <div className="mt-1 space-y-0.5 max-h-60 overflow-y-auto">
+                      {history.slice(0, 8).map((hist, idx) => {
+                        const t = TOOLS.find((tool) => tool.id === hist.toolId);
+                        if (!t) return null;
+                        return (
+                          <button
+                            key={`${hist.toolId}-${idx}`}
+                            onClick={() => {
+                              onNavigate(`tool-${hist.toolId}`);
+                              setShowHistoryDropdown(false);
+                            }}
+                            className="flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-xs hover:bg-gray-50 transition-colors cursor-pointer"
+                          >
+                            <span className="font-medium text-gray-800 truncate pr-2 dark:text-gray-250">{t.name}</span>
+                            <span className="text-[10px] font-mono text-gray-400 shrink-0">
+                              {new Date(hist.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 border-t border-gray-100 pt-2">
+                      <button
+                        onClick={() => {
+                          onNavigate('history-center');
+                          setShowHistoryDropdown(false);
+                        }}
+                        className="w-full text-center text-[10px] font-mono font-bold text-indigo-600 hover:text-indigo-800 hover:underline py-1.5 cursor-pointer"
+                      >
+                        View History Center &rarr;
+                      </button>
+                    </div>
+                  </>
                 ) : (
                   <div className="px-3 py-4 text-center text-xs text-gray-400">Your tool visitation history is clean and empty.</div>
                 )}

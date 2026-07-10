@@ -67,6 +67,21 @@ export default function DashboardView({
   const [safetyPercent, setSafetyPercent] = useState(0);
   const [latencyMs, setLatencyMs] = useState(20);
   const [isBenchmarking, setIsBenchmarking] = useState(false);
+  const [isOnboarded, setIsOnboarded] = useState(true);
+
+  // Initialize onboarding state
+  useEffect(() => {
+    const saved = localStorage.getItem('smartutils_onboarded');
+    if (saved !== 'true') {
+      setIsOnboarded(false);
+    }
+  }, []);
+
+  const handleDismissOnboarding = () => {
+    localStorage.setItem('smartutils_onboarded', 'true');
+    setIsOnboarded(true);
+    showToast('Onboarding completed! Welcome to your secure browser toolbox.', 'success');
+  };
 
   const runLiveLatencyBenchmark = () => {
     if (isBenchmarking) return;
@@ -214,6 +229,40 @@ export default function DashboardView({
     }
   };
 
+  // Predictive search scoring algorithm for Search Intelligence 2.0
+  const getSearchScore = (tool: typeof TOOLS[0], query: string) => {
+    const q = query.toLowerCase().trim();
+    if (!q) return 0;
+    
+    let score = 0;
+    const name = tool.name.toLowerCase();
+    const desc = tool.description.toLowerCase();
+    const cat = tool.category.toLowerCase();
+    
+    // Exact match
+    if (name === q) score += 100;
+    // Prefix match
+    else if (name.startsWith(q)) score += 60;
+    // Substring match
+    else if (name.includes(q)) score += 35;
+    
+    // Category match
+    if (cat === q) score += 40;
+    else if (cat.includes(q)) score += 15;
+    
+    // Keywords matching
+    tool.globalKeywords.forEach((kw) => {
+      const kwl = kw.toLowerCase();
+      if (kwl === q) score += 30;
+      else if (kwl.includes(q)) score += 15;
+    });
+    
+    // Description matching
+    if (desc.includes(q)) score += 10;
+    
+    return score;
+  };
+
   // Filter tools based on category, workspace filters, and search query
   const filteredTools = selectedCategory
     ? TOOLS.filter((t) => t.category === selectedCategory)
@@ -233,17 +282,14 @@ export default function DashboardView({
     displayedTools = [...TOOLS].sort((a, b) => parseFloat(b.version) - parseFloat(a.version));
   }
 
-  // Real-time keyword filter
-  const finalTools = searchQuery.trim() !== ''
-    ? displayedTools.filter((tool) => {
-        const query = searchQuery.toLowerCase();
-        return (
-          tool.name.toLowerCase().includes(query) ||
-          tool.description.toLowerCase().includes(query) ||
-          tool.globalKeywords.some((kw) => kw.toLowerCase().includes(query)) ||
-          tool.category.toLowerCase().includes(query)
-        );
-      })
+  // Real-time keyword filter with predictive search scoring (Priority 13)
+  const hasQuery = searchQuery.trim() !== '';
+  const finalTools = hasQuery
+    ? displayedTools
+        .map((tool) => ({ tool, score: getSearchScore(tool, searchQuery) }))
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map((item) => item.tool)
     : displayedTools;
 
   const popularSearches = [
@@ -402,44 +448,59 @@ export default function DashboardView({
             </button>
           </div>
 
-          {/* Animated Statistics Banner Widget */}
+          {/* Animated Interactive Statistics Banner Widget (Priority 7) */}
           <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-4 max-w-4xl mx-auto border border-gray-150 rounded-2xl bg-gray-50/40 p-5 backdrop-blur-xs dark:border-gray-900 dark:bg-gray-950/20" id="animated-stats-banner">
-            <div className="text-center p-2">
-              <span className="block font-mono text-2xl font-black text-gray-950 dark:text-white leading-none">
+            <button
+              onClick={() => document.getElementById('tools-showcase-grid')?.scrollIntoView({ behavior: 'smooth' })}
+              className="text-center p-2 cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-900/30 transition-all rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 group"
+              title="Click to view all active module blocks!"
+            >
+              <span className="block font-mono text-2xl font-black text-gray-950 dark:text-white leading-none group-hover:scale-105 transition-transform">
                 {activeCount}+
               </span>
-              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                Active Modules
+              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                Active Modules &darr;
               </span>
-            </div>
-            <div className="text-center p-2 border-l border-gray-150 dark:border-gray-900">
-              <span className="block font-mono text-2xl font-black text-indigo-600 dark:text-indigo-400 leading-none">
+            </button>
+
+            <button
+              onClick={() => setActiveTrustCard('privacy')}
+              className="text-center p-2 border-l border-gray-150 dark:border-gray-900 cursor-pointer hover:bg-indigo-50/10 dark:hover:bg-indigo-950/10 transition-all rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 group"
+              title="Click to inspect local privacy and security raw specs!"
+            >
+              <span className="block font-mono text-2xl font-black text-indigo-600 dark:text-indigo-400 leading-none group-hover:scale-105 transition-transform">
                 {safetyPercent}%
               </span>
-              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                Securely Local
+              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                Securely Local &rarr;
               </span>
-            </div>
-            <div className="text-center p-2 border-l border-gray-150 dark:border-gray-900">
-              <span className="block font-mono text-2xl font-black text-gray-950 dark:text-white leading-none">
+            </button>
+
+            <button
+              onClick={() => setActiveTrustCard('offline')}
+              className="text-center p-2 border-l border-gray-150 dark:border-gray-900 cursor-pointer hover:bg-emerald-50/10 dark:hover:bg-emerald-950/10 transition-all rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 group"
+              title="Click to view raw specs for full offline compilation execution!"
+            >
+              <span className="block font-mono text-2xl font-black text-gray-950 dark:text-white leading-none group-hover:scale-105 transition-transform">
                 0
               </span>
-              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                Bytes Uploaded
+              <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors">
+                Bytes Uploaded &rarr;
               </span>
-            </div>
-            <div 
+            </button>
+
+            <button 
               onClick={runLiveLatencyBenchmark}
-              className="text-center p-2 border-l border-gray-150 dark:border-gray-900 cursor-pointer hover:bg-emerald-50/10 active:scale-95 transition-all rounded-r-xl group/stats"
+              className="text-center p-2 border-l border-gray-150 dark:border-gray-900 cursor-pointer hover:bg-emerald-50/10 dark:hover:bg-emerald-950/10 transition-all rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 group/stats"
               title="Click to run live local-speed benchmark on your machine!"
             >
-              <span className={`block font-mono text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none ${isBenchmarking ? 'animate-pulse' : ''}`}>
+              <span className={`block font-mono text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none group-hover/stats:scale-105 transition-transform ${isBenchmarking ? 'animate-pulse' : ''}`}>
                 &lt; {latencyMs}ms
               </span>
               <span className="mt-1.5 block font-sans text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover/stats:text-emerald-500 transition-colors">
                 {isBenchmarking ? 'Testing...' : 'Engine Latency ⚡'}
               </span>
-            </div>
+            </button>
           </div>
 
         </div>
@@ -546,6 +607,72 @@ export default function DashboardView({
           </button>
         </div>
       </section>
+
+      {/* Universal Onboarding Deck (Priority 5) */}
+      {!isOnboarded && (
+        <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8" id="universal-onboarding-deck">
+          <div className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/40 via-violet-50/20 to-white p-6 md:p-8 dark:border-indigo-950/30 dark:from-indigo-950/15 dark:to-gray-950 shadow-md">
+            {/* Ambient indicator */}
+            <div className="absolute top-0 right-0 h-32 w-32 bg-indigo-500/10 blur-2xl rounded-full pointer-events-none"></div>
+            
+            <div className="flex items-center justify-between border-b border-indigo-100/50 dark:border-indigo-900/20 pb-4 mb-6">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-400">
+                  <Sparkles size={16} />
+                </span>
+                <div>
+                  <h3 className="font-sans font-bold text-sm text-gray-950 dark:text-white">
+                    SmartUtils Quick Onboarding Guide
+                  </h3>
+                  <p className="font-sans text-[11px] text-gray-405 dark:text-gray-450 mt-0.5">Welcome! Tap any highlight below to learn how our secure browser sandbox operates.</p>
+                </div>
+              </div>
+              <button
+                onClick={handleDismissOnboarding}
+                className="text-gray-400 hover:text-gray-650 dark:hover:text-white transition-colors cursor-pointer"
+                title="Dismiss onboarding guide forever"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="flex gap-3">
+                <span className="h-6 w-6 shrink-0 rounded-full bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono text-xs font-bold">1</span>
+                <div>
+                  <h4 className="font-sans font-bold text-xs text-gray-900 dark:text-white">Predictive Search &amp; Command</h4>
+                  <p className="font-sans text-[11px] text-gray-500 dark:text-gray-400 leading-normal mt-1">Press <kbd className="bg-gray-100 border border-gray-200 dark:bg-gray-800 dark:border-gray-750 px-1 rounded">/</kbd> to focus the predictive search bar, or use <kbd className="bg-gray-100 border border-gray-200 dark:bg-gray-800 dark:border-gray-750 px-1 rounded">Ctrl+K</kbd> to toggle the global command palette instantly.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <span className="h-6 w-6 shrink-0 rounded-full bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono text-xs font-bold">2</span>
+                <div>
+                  <h4 className="font-sans font-bold text-xs text-gray-900 dark:text-white">100% Offline &amp; Private</h4>
+                  <p className="font-sans text-[11px] text-gray-500 dark:text-gray-400 leading-normal mt-1">All calculators, parsers, and compressors execute strictly within local browser memory. Zero files or text inputs are uploaded.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <span className="h-6 w-6 shrink-0 rounded-full bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono text-xs font-bold">3</span>
+                <div>
+                  <h4 className="font-sans font-bold text-xs text-gray-900 dark:text-white">Workspace Favorites &amp; Bookmarks</h4>
+                  <p className="font-sans text-[11px] text-gray-500 dark:text-gray-400 leading-normal mt-1">Pin frequently processed utilities using the heart bookmark triggers. Your pins persist securely in your local browser storage cache.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={handleDismissOnboarding}
+                className="rounded-lg bg-indigo-600 px-4 py-2 font-sans text-xs font-bold text-white hover:bg-indigo-700 transition-colors shadow-xs cursor-pointer"
+              >
+                Got it, let's go!
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Tactile Category Bento Blocks Selection Grid */}
       <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8" id="category-bento-grid">
@@ -864,13 +991,56 @@ export default function DashboardView({
               <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 max-w-sm mx-auto leading-relaxed">
                 We couldn't find anything matching your query. Try resetting filters or search for terms like "JSON", "Word", or "Password".
               </p>
+              
+              {/* Intelligent Zero-Result Suggestions Deck (Priority 13) */}
+              <div className="mt-6 border-t border-gray-100 pt-6 max-w-md mx-auto dark:border-gray-850">
+                <span className="block font-mono text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
+                  Quick links to popular active utilities:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <button 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory(null);
+                      setWorkspaceFilter('all');
+                      onNavigate('tool-json-formatter');
+                    }}
+                    className="p-2.5 rounded-xl border border-gray-150 bg-gray-50 hover:border-indigo-400 dark:border-gray-800 dark:bg-gray-950/20 text-xs font-semibold text-gray-700 dark:text-gray-300 transition-all hover:shadow-xs cursor-pointer text-center active:scale-95"
+                  >
+                    JSON Formatter
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory(null);
+                      setWorkspaceFilter('all');
+                      onNavigate('tool-word-counter');
+                    }}
+                    className="p-2.5 rounded-xl border border-gray-150 bg-gray-50 hover:border-indigo-400 dark:border-gray-800 dark:bg-gray-950/20 text-xs font-semibold text-gray-700 dark:text-gray-300 transition-all hover:shadow-xs cursor-pointer text-center active:scale-95"
+                  >
+                    Word Counter
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory(null);
+                      setWorkspaceFilter('all');
+                      onNavigate('tool-age-calculator');
+                    }}
+                    className="p-2.5 rounded-xl border border-gray-150 bg-gray-50 hover:border-indigo-400 dark:border-gray-800 dark:bg-gray-950/20 text-xs font-semibold text-gray-700 dark:text-gray-300 transition-all hover:shadow-xs cursor-pointer text-center active:scale-95"
+                  >
+                    Age Calculator
+                  </button>
+                </div>
+              </div>
+
               <button
                 onClick={() => {
                   setSearchQuery('');
                   setSelectedCategory(null);
                   setWorkspaceFilter('all');
                 }}
-                className="mt-4 rounded-lg bg-gray-900 px-3.5 py-1.5 font-sans text-xs font-semibold text-white shadow-sm hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100"
+                className="mt-6 rounded-lg bg-gray-950 px-4 py-2 font-sans text-xs font-semibold text-white shadow-sm hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100 cursor-pointer"
               >
                 Reset Search Filters
               </button>

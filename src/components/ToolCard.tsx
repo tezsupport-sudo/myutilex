@@ -121,8 +121,39 @@ export default function ToolCard({ tool, onClick, isFavorite, onToggleFavorite, 
         );
       })()}
 
+      {/* Capability Badges Matrix (Priority 8) */}
+      {!tool.isPlanned && (
+        <div className="relative mt-3 flex flex-wrap gap-1 z-10" id={`tool-caps-${tool.id}`}>
+          {tool.offlineReady && (
+            <span className="inline-flex items-center rounded-sm bg-emerald-50 px-1.5 py-0.5 text-[9px] font-mono font-semibold text-emerald-700 dark:bg-emerald-950/25 dark:text-emerald-400 border border-emerald-200/20">
+              Offline
+            </span>
+          )}
+          {!tool.apiRequired && (
+            <span className="inline-flex items-center rounded-sm bg-indigo-50 px-1.5 py-0.5 text-[9px] font-mono font-semibold text-indigo-700 dark:bg-indigo-950/25 dark:text-indigo-400 border border-indigo-200/20">
+              No Upload
+            </span>
+          )}
+          {tool.supportsDragDrop && (
+            <span className="inline-flex items-center rounded-sm bg-amber-50 px-1.5 py-0.5 text-[9px] font-mono font-semibold text-amber-700 dark:bg-amber-950/25 dark:text-amber-400 border border-amber-200/20">
+              Drag-Drop
+            </span>
+          )}
+          {tool.supportsBatch && (
+            <span className="inline-flex items-center rounded-sm bg-violet-50 px-1.5 py-0.5 text-[9px] font-mono font-semibold text-violet-700 dark:bg-violet-950/25 dark:text-violet-400 border border-violet-200/20">
+              Batch
+            </span>
+          )}
+          {tool.mobileReady && (
+            <span className="inline-flex items-center rounded-sm bg-sky-50 px-1.5 py-0.5 text-[9px] font-mono font-semibold text-sky-700 dark:bg-sky-950/25 dark:text-sky-400 border border-sky-200/20">
+              Mobile Ready
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Visual Indicator Footer */}
-      <div className="relative mt-5 flex items-center justify-between border-t border-gray-150 pt-3 dark:border-gray-800 z-10">
+      <div className="relative mt-4 flex items-center justify-between border-t border-gray-150 pt-3 dark:border-gray-800 z-10">
         <span className="font-mono text-[9px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
           {tool.category} Utility
         </span>

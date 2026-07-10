@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Heart, BookOpen, FileText, HelpCircle, ChevronDown, ChevronUp, Settings2, Server, Cpu, Database, EyeOff, Layers, Key, Share2, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
+import { 
+  ArrowLeft, Heart, BookOpen, FileText, HelpCircle, ChevronDown, ChevronUp, 
+  Settings2, Server, Cpu, Database, EyeOff, Layers, Key, Share2, Maximize2, 
+  Minimize2, RotateCcw, ChevronLeft, ChevronRight, History, Flame, Star, Sparkles 
+} from 'lucide-react';
 import { ToolMetadata } from '../types';
 import { TOOLS } from '../data/tools';
 import { useToast } from './Toast';
@@ -24,9 +28,33 @@ export default function ToolLayout({
   const { showToast } = useToast();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [recommendationTab, setRecommendationTab] = useState<'category' | 'popular' | 'recent'>('category');
 
-  // Find related tools in the same category (excluding current tool)
-  const relatedTools = TOOLS.filter((t) => t.category === tool.category && t.id !== tool.id).slice(0, 3);
+  // Find active non-planned tools for sequence loop
+  const activeTools = TOOLS.filter((t) => !t.isPlanned);
+  const currentIdx = activeTools.findIndex((t) => t.id === tool.id);
+  const prevTool = currentIdx !== -1 ? activeTools[(currentIdx - 1 + activeTools.length) % activeTools.length] : null;
+  const nextTool = currentIdx !== -1 ? activeTools[(currentIdx + 1) % activeTools.length] : null;
+
+  // Retrieve recommendations
+  const categoryTools = TOOLS.filter((t) => t.category === tool.category && t.id !== tool.id && !t.isPlanned).slice(0, 3);
+  const popularTools = [...TOOLS].filter((t) => t.id !== tool.id && !t.isPlanned).sort((a, b) => b.popularScore - a.popularScore).slice(0, 3);
+  
+  // History lookup
+  let recentTools: typeof TOOLS = [];
+  try {
+    const savedHistory = localStorage.getItem('smartutils_history');
+    if (savedHistory) {
+      const historyList = JSON.parse(savedHistory);
+      recentTools = historyList
+        .filter((item: any) => item.toolId !== tool.id)
+        .map((item: any) => TOOLS.find((t) => t.id === item.toolId))
+        .filter((t: any) => !!t && !t.isPlanned)
+        .slice(0, 3) as typeof TOOLS;
+    }
+  } catch (e) {
+    console.error(e);
+  }
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
@@ -407,26 +435,157 @@ export default function ToolLayout({
           </div>
         )}
 
-        {/* Dynamic Related Tools Recommendation Bar */}
-        {relatedTools.length > 0 && (
-          <div className="border-t border-gray-200 pt-6">
-            <h4 className="font-mono text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
-              Similar utilities you might like
-            </h4>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-              {relatedTools.map((rt) => (
+        {/* Continuous Ecosystem Navigation Hub */}
+        <div className="border-t border-gray-100 pt-8 mt-8 dark:border-gray-800" id="tool-ecosystem-navigation">
+          
+          {/* Previous / Next Sequential Flow */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            {prevTool && (
+              <button
+                onClick={() => onNavigate(`tool-${prevTool.id}`)}
+                className="group flex items-center justify-between p-4 rounded-xl border border-gray-150 bg-white hover:border-indigo-400 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-500 transition-all text-left cursor-pointer active:scale-98"
+                id="prev-tool-nav-btn"
+              >
+                <div className="flex items-center space-x-3.5">
+                  <div className="p-2.5 rounded-lg bg-gray-50 dark:bg-gray-850 text-gray-500 dark:text-gray-400 group-hover:text-indigo-600 transition-colors">
+                    <ChevronLeft size={16} />
+                  </div>
+                  <div>
+                    <span className="block font-mono text-[9px] uppercase tracking-wider text-gray-400">Previous Sandbox</span>
+                    <span className="block font-sans font-bold text-xs text-gray-900 dark:text-white mt-0.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{prevTool.name}</span>
+                  </div>
+                </div>
+              </button>
+            )}
+
+            {nextTool && (
+              <button
+                onClick={() => onNavigate(`tool-${nextTool.id}`)}
+                className="group flex items-center justify-between p-4 rounded-xl border border-gray-150 bg-white hover:border-indigo-400 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-500 transition-all text-left cursor-pointer active:scale-98"
+                id="next-tool-nav-btn"
+              >
+                <div className="flex items-center space-x-3.5">
+                  <div>
+                    <span className="block font-mono text-[9px] uppercase tracking-wider text-gray-400 text-right">Next Sandbox</span>
+                    <span className="block font-sans font-bold text-xs text-gray-900 dark:text-white mt-0.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{nextTool.name}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-gray-50 dark:bg-gray-850 text-gray-500 dark:text-gray-400 group-hover:text-indigo-600 transition-colors">
+                    <ChevronRight size={16} />
+                  </div>
+                </div>
+              </button>
+            )}
+          </div>
+
+          {/* Interactive Recommended Tools Panel with Tabs */}
+          <div className="rounded-xl border border-gray-150 bg-gray-50/30 p-5 dark:border-gray-800 dark:bg-gray-950/10">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-150 pb-3 mb-4 dark:border-gray-800">
+              <span className="inline-flex items-center gap-1.5 font-mono text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                <Sparkles size={11} className="text-indigo-500" /> Continuous Discovery Engine
+              </span>
+              
+              {/* Recommendation Segmented Tab Controls */}
+              <div className="flex bg-gray-100 dark:bg-gray-850 rounded-lg p-0.5 self-start text-[10px] font-sans font-bold text-gray-550">
                 <button
-                  key={rt.id}
-                  onClick={() => onNavigate(`tool-${rt.id}`)}
-                  className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-3.5 text-left transition-all hover:border-gray-400 hover:shadow-sm"
+                  onClick={() => setRecommendationTab('category')}
+                  className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${recommendationTab === 'category' ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'hover:text-gray-800 dark:hover:text-gray-200'}`}
                 >
-                  <span className="font-sans font-semibold text-xs text-gray-900 line-clamp-1">{rt.name}</span>
-                  <span className="mt-1 font-sans text-[11px] text-gray-400 line-clamp-1">{rt.description}</span>
+                  Same Category
                 </button>
-              ))}
+                <button
+                  onClick={() => setRecommendationTab('popular')}
+                  className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${recommendationTab === 'popular' ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'hover:text-gray-800 dark:hover:text-gray-200'}`}
+                >
+                  Popular Today
+                </button>
+                <button
+                  onClick={() => setRecommendationTab('recent')}
+                  className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${recommendationTab === 'recent' ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'hover:text-gray-800 dark:hover:text-gray-200'}`}
+                >
+                  Recently Used
+                </button>
+              </div>
+            </div>
+
+            {/* Recommendations Content Grid */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {recommendationTab === 'category' && (
+                categoryTools.length > 0 ? (
+                  categoryTools.map((rt) => (
+                    <button
+                      key={rt.id}
+                      onClick={() => onNavigate(`tool-${rt.id}`)}
+                      className="group flex flex-col items-start rounded-xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-indigo-400 hover:shadow-xs dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-500 cursor-pointer"
+                    >
+                      <span className="font-sans font-bold text-xs text-gray-950 dark:text-white line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{rt.name}</span>
+                      <span className="mt-1 font-sans text-[11px] text-gray-400 line-clamp-2 leading-relaxed">{rt.description}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-4 text-xs font-sans text-gray-400">
+                    No other tools in this category.
+                  </div>
+                )
+              )}
+
+              {recommendationTab === 'popular' && (
+                popularTools.map((rt) => (
+                  <button
+                    key={rt.id}
+                    onClick={() => onNavigate(`tool-${rt.id}`)}
+                    className="group flex flex-col items-start rounded-xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-indigo-400 hover:shadow-xs dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-500 cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-sans font-bold text-xs text-gray-950 dark:text-white line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{rt.name}</span>
+                      <span className="font-mono text-[9px] text-indigo-500 dark:text-indigo-400 font-extrabold flex items-center gap-0.5"><Flame size={9} /> {rt.popularScore}</span>
+                    </div>
+                    <span className="mt-1 font-sans text-[11px] text-gray-400 line-clamp-2 leading-relaxed">{rt.description}</span>
+                  </button>
+                ))
+              )}
+
+              {recommendationTab === 'recent' && (
+                recentTools.length > 0 ? (
+                  recentTools.map((rt) => (
+                    <button
+                      key={rt.id}
+                      onClick={() => onNavigate(`tool-${rt.id}`)}
+                      className="group flex flex-col items-start rounded-xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-indigo-400 hover:shadow-xs dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-500 cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="font-sans font-bold text-xs text-gray-950 dark:text-white line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{rt.name}</span>
+                        <History size={10} className="text-gray-400" />
+                      </div>
+                      <span className="mt-1 font-sans text-[11px] text-gray-400 line-clamp-2 leading-relaxed">{rt.description}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-6 border border-dashed border-gray-200 dark:border-gray-800 rounded-lg text-xs font-sans text-gray-450 dark:text-gray-500">
+                    No recently processed sandboxes in history registry.
+                  </div>
+                )
+              )}
+            </div>
+
+            {/* Bookmark Fast Check & Status Banner */}
+            <div className="mt-4 flex flex-col sm:flex-row items-center justify-between p-3 rounded-lg border border-gray-150 bg-white text-xs font-sans dark:border-gray-800 dark:bg-gray-900 text-gray-500 dark:text-gray-400 gap-3">
+              <span className="flex items-center gap-2">
+                <Star size={12} className={isFavorite ? 'text-amber-500 fill-amber-500' : 'text-gray-400'} />
+                <span>
+                  {isFavorite 
+                    ? 'This utility is currently saved in your browser favorites bookmark repository.' 
+                    : 'This utility is not yet pinned to your home tab workspace favorites bar.'}
+                </span>
+              </span>
+              <button 
+                onClick={onToggleFavorite}
+                className={`font-sans font-bold text-[11px] px-3 py-1.5 rounded-lg border cursor-pointer active:scale-97 transition-colors shrink-0 ${isFavorite ? 'border-rose-150 bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:border-rose-900/40 dark:text-rose-400' : 'border-gray-200 text-indigo-600 hover:bg-gray-50 dark:border-gray-800 dark:text-indigo-400 dark:hover:bg-gray-850'}`}
+              >
+                {isFavorite ? 'Remove Pin' : 'Pin to favorites'}
+              </button>
             </div>
           </div>
-        )}
+        </div>
 
       </section>
 

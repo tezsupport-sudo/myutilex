@@ -14,6 +14,8 @@ import StaticView from './components/StaticView';
 import DashboardView from './components/DashboardView';
 import ReviewView from './components/ReviewView';
 import DesignSystemView from './components/DesignSystemView';
+import HistoryCenterView from './components/HistoryCenterView';
+import DocumentationCenter from './components/DocumentationCenter';
 
 // Core Tool Engines
 import TextEngine from './components/TextEngine';
@@ -238,6 +240,20 @@ export default function App() {
           >
             {currentView.startsWith('tool-')
               ? renderToolView(currentView.replace('tool-', ''))
+              : currentView === 'history-center'
+              ? <HistoryCenterView 
+                  favorites={favorites} 
+                  toggleFavorite={toggleFavorite} 
+                  history={history} 
+                  setHistory={setHistory} 
+                  onNavigate={navigateTo} 
+                  onBack={() => navigateTo('home')} 
+                />
+              : ['docs', 'architecture', 'privacy-ledger', 'faq', 'personality'].includes(currentView)
+              ? <DocumentationCenter 
+                  onBack={() => navigateTo('home')} 
+                  initialTab={currentView === 'privacy-ledger' ? 'privacy' : currentView === 'docs' ? 'architecture' : currentView} 
+                />
               : currentView === 'review'
               ? <ReviewView onBack={() => navigateTo('home')} onNavigate={navigateTo} />
               : currentView === 'design-system'

@@ -74,25 +74,31 @@ export default function Footer({ onNavigate, selectedRegion, onSetRegion }: Foot
           <div>
             <h4 className="font-mono text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Platform Quicklinks</h4>
             <div className="grid grid-cols-2 gap-1 text-gray-500 dark:text-gray-400 font-semibold">
-              <button onClick={() => onNavigate('review')} className="hover:text-indigo-600 dark:hover:text-indigo-400 text-left transition-colors font-bold text-indigo-500 flex items-center space-x-1">
+              <button onClick={() => onNavigate('review')} className="hover:text-indigo-600 dark:hover:text-indigo-400 text-left transition-colors font-bold text-indigo-500 flex items-center space-x-1 cursor-pointer">
                 <span>QA Review Board</span>
                 <span className="text-[8px] bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-1 py-0.2 rounded font-mono">NEW</span>
               </button>
-              <button onClick={() => onNavigate('about')} className="hover:text-gray-900 dark:hover:text-white text-left transition-colors">
+              <button onClick={() => onNavigate('about')} className="hover:text-gray-900 dark:hover:text-white text-left transition-colors cursor-pointer">
                 About Us
               </button>
-              <button onClick={() => onNavigate('privacy')} className="hover:text-gray-900 dark:hover:text-white text-left transition-colors">
-                Privacy Policy
+              <button onClick={() => onNavigate('privacy-ledger')} className="hover:text-gray-900 dark:hover:text-white text-left transition-colors cursor-pointer">
+                Privacy Ledger
               </button>
-              <button onClick={() => onNavigate('terms')} className="hover:text-gray-900 dark:hover:text-white text-left transition-colors">
+              <button onClick={() => onNavigate('architecture')} className="hover:text-gray-900 dark:hover:text-white text-left transition-colors cursor-pointer">
+                Architecture
+              </button>
+              <button onClick={() => onNavigate('faq')} className="hover:text-gray-900 dark:hover:text-white text-left transition-colors cursor-pointer">
+                Interactive FAQs
+              </button>
+              <button onClick={() => onNavigate('personality')} className="hover:text-gray-900 dark:hover:text-white text-left transition-colors cursor-pointer">
+                Content Guide
+              </button>
+              <button onClick={() => onNavigate('terms')} className="hover:text-gray-900 dark:hover:text-white text-left transition-colors cursor-pointer">
                 Terms of Use
               </button>
-              <button onClick={() => onNavigate('disclaimer')} className="hover:text-gray-900 dark:hover:text-white text-left transition-colors">
+              <button onClick={() => onNavigate('disclaimer')} className="hover:text-gray-900 dark:hover:text-white text-left transition-colors cursor-pointer">
                 Disclaimer
               </button>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 dark:hover:text-white text-left transition-colors">
-                GitHub Repo
-              </a>
             </div>
           </div>
 
